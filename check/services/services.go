@@ -2,7 +2,7 @@ package services
 
 import (
 	"encoding/json"
-	"payment/data"
+	"payment/check/data"
 
 	"github.com/tidwall/buntdb"
 )
