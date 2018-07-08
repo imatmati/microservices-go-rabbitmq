@@ -8,14 +8,14 @@ import (
 )
 
 const (
-	CLOSED = iota
-	SUSPENDED
-	OPENED
+	EUR = "EURO"
+	USD = "DOLLAR"
 )
 
 type Account struct {
-	Number string
-	Status int
+	Number   string
+	Amount   int
+	Currency string
 }
 
 var Db *buntdb.DB
@@ -24,8 +24,8 @@ func init() {
 	var err error
 	Db, err = buntdb.Open(":memory:")
 	l.PanicIf(err)
+	account := Account{"RI5TO9O", 568067, EUR}
 
-	account := Account{"RI5TO9O", OPENED}
 	err = Db.Update(func(tx *buntdb.Tx) error {
 
 		jsonAccount, err := json.Marshal(account)

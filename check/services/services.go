@@ -3,6 +3,7 @@ package services
 import (
 	"encoding/json"
 	"payment/check/data"
+	l "payment/utils/language"
 
 	"github.com/tidwall/buntdb"
 )
@@ -11,9 +12,7 @@ func CheckAccount(number string) (check bool) {
 	check = false
 	data.Db.View(func(tx *buntdb.Tx) error {
 		accountJson, err := tx.Get(number)
-		if err != nil {
-			return err
-		}
+		l.PanicIf(err)
 		account := data.Account{}
 
 		json.Unmarshal([]byte(accountJson), &account)
