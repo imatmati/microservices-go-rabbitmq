@@ -15,9 +15,9 @@ func PaymentHandler(rw http.ResponseWriter, rq *http.Request) {
 
 	if services.CheckAccount(account) {
 		rw.WriteHeader(201)
-		fmt.Fprint(rw, "accepted\n")
+		fmt.Fprint(rw, "{'account':"+account+",'result':'accepted'}")
 		return
 	}
 	rw.WriteHeader(200)
-	fmt.Fprint(rw, "rejected\n")
+	fmt.Fprint(rw, "{'account':"+account+",'result':'rejected'}")
 }
