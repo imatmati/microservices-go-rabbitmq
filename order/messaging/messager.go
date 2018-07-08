@@ -37,14 +37,14 @@ func InitMessaging(url string) {
 
 }
 
-func consumeResponses(ch *amqp.Channel) <-chan amqp.Delivery {
+func consumeCheckResponses(ch *amqp.Channel) <-chan amqp.Delivery {
 	msgs, err := ch.Consume(ConsQueueName, "check consumer", false, false, false, false, nil)
 	l.PanicIf(err)
 	logger.Logger.Println("Response message consumer set")
 	return msgs
 }
 
-func sendCheckRequest(account string, ch *amqp.Channel) string {
+func sendCheckRequestFor(account string, ch *amqp.Channel) string {
 	corrId := random.RandomString(32)
 	err := ch.Publish("finance", messaging.ConsQueueName, false, false, amqp.Publishing{
 		ContentType:   "text/plain",
@@ -57,6 +57,24 @@ func sendCheckRequest(account string, ch *amqp.Channel) string {
 	return corrId
 }
 
+func treatResponsesFromCheck(msgs <-chan amqp.Delivery, corrId string) bool {
+	response := false
+	for msg := range msgs {
+		logger.Logger.Printf("Message received : %v\n", msg)
+		if msg.CorrelationId != corrId {
+			msg.Nack(false, true)
+			continue
+		}
+		check := msg.Body
+		msg.Ack(false)
+		if string(check) == "true" {
+			response = true
+		}
+		break
+	}
+	return response
+}
+
 func CheckAccount(account string) bool {
 
 	// Init channels and defer close
@@ -67,33 +85,8 @@ func CheckAccount(account string) bool {
 	l.PanicIf(err)
 	defer ch.Close()
 
-	msgs := consumeResponses(chResp)
-	corrId := sendCheckRequest(account, ch)
+	msgs := consumeCheckResponses(chResp)
+	corrId := sendCheckRequestFor(account, ch)
+	return treatResponsesFromCheck(msgs, corrId)
 
-	//corrId := random.RandomString(32)
-	// logger.Logger.Printf("Message correlation id : %s published on %s\n", corrId, messaging.ConsQueueName)
-	// err = ch.Publish("finance", messaging.ConsQueueName, false, false, amqp.Publishing{
-	// 	ContentType:   "text/plain",
-	// 	Body:          []byte(account),
-	// 	ReplyTo:       ConsQueueName,
-	// 	CorrelationId: corrId,
-	// })
-	// l.PanicIf(err)
-	response := false
-	for msg := range msgs {
-		logger.Logger.Printf("Message received : %v\n", msg)
-		if msg.CorrelationId != corrId {
-			msg.Nack(false, true)
-			continue
-		}
-		check := msg.Body
-		logger.Logger.Printf("Response for %s (%s) , %s : %v", account, msg.CorrelationId, check, msg)
-		msg.Ack(false)
-		if string(check) == "true" {
-			response = true
-		}
-		break
-	}
-	//TODO Manage the case where the loop is not executed.
-	return response
 }

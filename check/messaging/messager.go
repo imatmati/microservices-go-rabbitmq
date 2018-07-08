@@ -39,15 +39,7 @@ func InitMessaging(url string) {
 
 }
 
-func Start() {
-
-	chResp, err := PubConn.Channel()
-	l.PanicIf(err)
-	defer chResp.Close()
-	ch, err := ConsConn.Channel()
-	l.PanicIf(err)
-	defer ch.Close()
-
+func consumeCheckRequest(ch, chResp *amqp.Channel) {
 	msgs, err := ch.Consume(ConsQueueName, "", false, false, false, false, nil)
 	l.PanicIf(err)
 	for msg := range msgs {
@@ -56,7 +48,6 @@ func Start() {
 		account := string(msg.Body)
 		check := services.CheckAccount(account)
 		logger.Logger.Printf("Check for account %s is %s\n", account, []byte(strconv.FormatBool(check)))
-		logger.Logger.Printf("Reply to %s\n", msg.ReplyTo)
 		err = chResp.Publish("finance", msg.ReplyTo, false, false, amqp.Publishing{
 
 			ContentType:   "text/plain",
@@ -67,5 +58,16 @@ func Start() {
 		msg.Ack(false)
 
 	}
-	logger.Logger.Println("Out of loop")
+}
+
+func Start() {
+
+	chResp, err := PubConn.Channel()
+	l.PanicIf(err)
+	defer chResp.Close()
+	ch, err := ConsConn.Channel()
+	l.PanicIf(err)
+	defer ch.Close()
+
+	consumeCheckRequest(ch, chResp)
 }
