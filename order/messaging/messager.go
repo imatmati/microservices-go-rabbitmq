@@ -37,26 +37,48 @@ func InitMessaging(url string) {
 
 }
 
-func CheckAccount(account string) bool {
+func consumeResponses(ch *amqp.Channel) <-chan amqp.Delivery {
+	msgs, err := ch.Consume(ConsQueueName, "check consumer", false, false, false, false, nil)
+	l.PanicIf(err)
+	logger.Logger.Println("Response message consumer set")
+	return msgs
+}
 
-	chResp, err := PubConn.Channel()
-	l.PanicIf(err)
-	defer chResp.Close()
-	ch, err := ConsConn.Channel()
-	l.PanicIf(err)
-	defer ch.Close()
-	msgs, err := chResp.Consume(ConsQueueName, "check consumer", false, false, false, false, nil)
-	l.PanicIf(err)
-
+func sendCheckRequest(account string, ch *amqp.Channel) string {
 	corrId := random.RandomString(32)
-	logger.Logger.Printf("Message correlation id : %s published on %s\n", corrId, messaging.ConsQueueName)
-	err = ch.Publish("finance", messaging.ConsQueueName, false, false, amqp.Publishing{
+	err := ch.Publish("finance", messaging.ConsQueueName, false, false, amqp.Publishing{
 		ContentType:   "text/plain",
 		Body:          []byte(account),
 		ReplyTo:       ConsQueueName,
 		CorrelationId: corrId,
 	})
 	l.PanicIf(err)
+	logger.Logger.Printf("Check message for account %s has correlation id %s and was published on %s\n", account, corrId, messaging.ConsQueueName)
+	return corrId
+}
+
+func CheckAccount(account string) bool {
+
+	// Init channels and defer close
+	chResp, err := ConsConn.Channel()
+	l.PanicIf(err)
+	defer chResp.Close()
+	ch, err := PubConn.Channel()
+	l.PanicIf(err)
+	defer ch.Close()
+
+	msgs := consumeResponses(chResp)
+	corrId := sendCheckRequest(account, ch)
+
+	//corrId := random.RandomString(32)
+	// logger.Logger.Printf("Message correlation id : %s published on %s\n", corrId, messaging.ConsQueueName)
+	// err = ch.Publish("finance", messaging.ConsQueueName, false, false, amqp.Publishing{
+	// 	ContentType:   "text/plain",
+	// 	Body:          []byte(account),
+	// 	ReplyTo:       ConsQueueName,
+	// 	CorrelationId: corrId,
+	// })
+	// l.PanicIf(err)
 	response := false
 	for msg := range msgs {
 		logger.Logger.Printf("Message received : %v\n", msg)

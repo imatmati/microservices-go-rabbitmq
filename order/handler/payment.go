@@ -18,5 +18,6 @@ func PaymentHandler(rw http.ResponseWriter, rq *http.Request) {
 		fmt.Fprint(rw, "accepted\n")
 		return
 	}
+	rw.WriteHeader(200)
 	fmt.Fprint(rw, "rejected\n")
 }
