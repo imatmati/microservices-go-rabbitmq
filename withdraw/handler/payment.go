@@ -1,16 +1,16 @@
 package handler
 
 import (
+	"account/logger"
+	utils "account/utils/http"
+	l "account/utils/language"
+	"account/withdraw/services"
 	"fmt"
 	"net/http"
-	"payment/logger"
-	"payment/order/services"
-	utils "payment/utils/http"
-	l "payment/utils/language"
 	"strconv"
 )
 
-func PaymentHandler(rw http.ResponseWriter, rq *http.Request) {
+func WithdrawHandler(rw http.ResponseWriter, rq *http.Request) {
 	parameters := utils.ExtractParametersFrom(rq, "account", "amount", "currency")
 	account, currency := parameters[0], parameters[2]
 	amount, err := strconv.Atoi(parameters[1])

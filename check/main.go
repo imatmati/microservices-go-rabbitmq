@@ -1,12 +1,12 @@
 package main
 
 import (
+	"account/check/handler"
+	"account/check/messaging"
+	"account/logger"
+	l "account/utils/language"
 	"flag"
 	"net/http"
-	"payment/check/handler"
-	"payment/check/messaging"
-	"payment/logger"
-	l "payment/utils/language"
 )
 
 func main() {
@@ -19,7 +19,7 @@ func main() {
 	messaging.InitMessaging(*amqp)
 	go messaging.Start()
 
-	http.HandleFunc("/check", handler.PaymentHandler)
+	http.HandleFunc("/check", handler.CheckHandler)
 	err := http.ListenAndServe(*addr, nil)
 	l.PanicIf(err)
 }

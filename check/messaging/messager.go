@@ -1,9 +1,9 @@
 package messaging
 
 import (
-	"payment/check/services"
-	"payment/logger"
-	l "payment/utils/language"
+	"account/check/services"
+	"account/logger"
+	l "account/utils/language"
 	"strconv"
 
 	"github.com/streadway/amqp"

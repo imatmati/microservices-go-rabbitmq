@@ -1,10 +1,10 @@
 package messaging
 
 import (
-	"payment/check/messaging"
-	"payment/logger"
-	l "payment/utils/language"
-	"payment/utils/random"
+	"account/check/messaging"
+	"account/logger"
+	l "account/utils/language"
+	"account/utils/random"
 
 	"github.com/streadway/amqp"
 )
@@ -53,7 +53,7 @@ func sendCheckRequestFor(account string, ch *amqp.Channel) string {
 		CorrelationId: corrId,
 	})
 	l.PanicIf(err)
-	logger.Logger.Printf("Check message for account %s has correlation id %s and was published on %s\n", account, corrId, messaging.ConsQueueName)
+	logger.Logger.Printf("Check request message for account %s has correlation id %s and was published on %s\n", account, corrId, messaging.ConsQueueName)
 	return corrId
 }
 
@@ -66,10 +66,10 @@ func treatResponsesFromCheck(msgs <-chan amqp.Delivery, corrId string) bool {
 			continue
 		}
 		check := msg.Body
-		msg.Ack(false)
 		if string(check) == "true" {
 			response = true
 		}
+		msg.Ack(false)
 		break
 	}
 	return response

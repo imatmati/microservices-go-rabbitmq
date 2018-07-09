@@ -2,7 +2,7 @@ package data
 
 import (
 	"encoding/json"
-	l "payment/utils/language"
+	l "account/utils/language"
 
 	"github.com/tidwall/buntdb"
 )
