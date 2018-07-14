@@ -8,9 +8,9 @@ import (
 	"github.com/tidwall/buntdb"
 )
 
-func CheckAccount(number string) (check bool) {
+func CheckAccount(number string) (check bool, err error) {
 	check = false
-	data.Db.View(func(tx *buntdb.Tx) error {
+	err = data.Db.View(func(tx *buntdb.Tx) error {
 		accountJson, err := tx.Get(number)
 		if err != nil {
 			return fmt.Errorf("account %s not found", number)

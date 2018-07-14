@@ -47,7 +47,7 @@ func consumeCheckRequest(ch, chResp *amqp.Channel) {
 
 		logger.Logger.Printf("Message received : %v\n", msg)
 		account := string(msg.Body)
-		check := services.CheckAccount(account)
+		check, err := services.CheckAccount(account)
 		logger.Logger.Printf("Check for account %s is %s\n", account, []byte(strconv.FormatBool(check)))
 		err = chResp.Publish("finance", msg.ReplyTo, false, false, amqp.Publishing{
 
@@ -55,7 +55,10 @@ func consumeCheckRequest(ch, chResp *amqp.Channel) {
 			Body:          []byte(strconv.FormatBool(check)),
 			CorrelationId: msg.CorrelationId,
 		})
-		l.PanicIf(err)
+		if err != nil {
+			logger.Logger.Println(err.Error())
+		}
+
 		msg.Ack(false)
 
 	}

@@ -10,24 +10,36 @@ import (
 	"strconv"
 )
 
+//WithdrawHandler handles withdraw operation on account.
 func WithdrawHandler(rw http.ResponseWriter, rq *http.Request) {
+	defer func() {
+		if r := recover(); r != nil {
+			rw.WriteHeader(500)
+			rw.Write([]byte(utils.ErrorJSON(fmt.Sprintf("%v", r))))
+		}
+	}()
+	// I - Parameters extraction
 	parameters := utils.ExtractParametersFrom(rq, "account", "amount", "currency")
 	account, currency := parameters[0], parameters[2]
 	amount, err := strconv.Atoi(parameters[1])
-	l.PanicIf(err)
-	logger.Logger.Printf("operation : account %s : %d %s\n", account, amount, currency)
+	l.PanicIf(err, "Conversion error of amount")
+	logger.Logger.Printf("operation : account %s : %d/100 of %s\n", account, amount, currency)
 
+	statusCode := 500
+	result := "rejected"
+
+	// II - Check account
 	if services.CheckAccount(account) {
-		logger.Logger.Printf("Checked\n")
-		if amount, err = services.UpdateAccount(account, amount, currency); err == nil {
-			logger.Logger.Printf("%s pdated\n", account)
-			rw.WriteHeader(201)
-			fmt.Fprint(rw, "{\"account\":\""+account+"\",\"result\":\"accepted\",\"amount\":\""+strconv.Itoa(amount)+"\"}")
-			return
-		} else {
-			logger.Logger.Println(err.Error())
-		}
+		logger.Logger.Printf("Account %s passed check\n", account)
+		// III - Update amount of account
+		amount = services.UpdateAccount(account, amount, currency)
+		logger.Logger.Printf("Account %s updated\n", account)
+		statusCode = 201
+		result = "accepted"
 	}
-	rw.WriteHeader(200)
-	fmt.Fprint(rw, "{\"account\":\""+account+"\",\"result\":\"rejected\",\"error\":\""+err.Error()+"\"}")
+	// IV - Send response
+	rw.Header().Set("Content-Type", "application/json")
+	rw.WriteHeader(statusCode)
+	fmt.Fprint(rw, fmt.Sprintf("{\"account\":\"%s\",\"result\":\"%s\"}", account, result))
+
 }
