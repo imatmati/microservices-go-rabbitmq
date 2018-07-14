@@ -12,9 +12,10 @@ import (
 var PubConn *amqp.Connection
 var ConsConn *amqp.Connection
 
-const ConsQueueName = "check"
+var ConsQueueName string
 
-func InitMessaging(url string) {
+func InitMessaging(url, checkQueue string) {
+	ConsQueueName = checkQueue
 	var err error
 	ConsConn, err = amqp.Dial(url)
 	l.PanicIf(err)

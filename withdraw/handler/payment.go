@@ -19,13 +19,15 @@ func WithdrawHandler(rw http.ResponseWriter, rq *http.Request) {
 
 	if services.CheckAccount(account) {
 		logger.Logger.Printf("Checked\n")
-		if err := services.UpdateAccount(account, amount, currency); err == nil {
-			logger.Logger.Printf("Updated\n")
+		if amount, err = services.UpdateAccount(account, amount, currency); err == nil {
+			logger.Logger.Printf("%s pdated\n", account)
 			rw.WriteHeader(201)
-			fmt.Fprint(rw, "{'account':'"+account+"','result':'accepted'}")
+			fmt.Fprint(rw, "{\"account\":\""+account+"\",\"result\":\"accepted\",\"amount\":\""+strconv.Itoa(amount)+"\"}")
 			return
+		} else {
+			logger.Logger.Println(err.Error())
 		}
 	}
 	rw.WriteHeader(200)
-	fmt.Fprint(rw, "{'account':'"+account+"','result':'rejected'}")
+	fmt.Fprint(rw, "{\"account\":\""+account+"\",\"result\":\"rejected\",\"error\":\""+err.Error()+"\"}")
 }

@@ -1,7 +1,6 @@
 package messaging
 
 import (
-	"account/check/messaging"
 	"account/logger"
 	l "account/utils/language"
 	"account/utils/random"
@@ -12,9 +11,12 @@ import (
 var PubConn *amqp.Connection
 var ConsConn *amqp.Connection
 
-const ConsQueueName = "order_check"
+var ConsQueueName string
+var PubQueueName string
 
-func InitMessaging(url string) {
+func InitMessaging(url, checkQueue, withdrawQueue string) {
+	ConsQueueName = withdrawQueue
+	PubQueueName = checkQueue
 	var err error
 	PubConn, err = amqp.Dial(url)
 	l.PanicIf(err)
@@ -46,14 +48,14 @@ func consumeCheckResponses(ch *amqp.Channel) <-chan amqp.Delivery {
 
 func sendCheckRequestFor(account string, ch *amqp.Channel) string {
 	corrId := random.RandomString(32)
-	err := ch.Publish("finance", messaging.ConsQueueName, false, false, amqp.Publishing{
+	err := ch.Publish("finance", PubQueueName, false, false, amqp.Publishing{
 		ContentType:   "text/plain",
 		Body:          []byte(account),
 		ReplyTo:       ConsQueueName,
 		CorrelationId: corrId,
 	})
 	l.PanicIf(err)
-	logger.Logger.Printf("Check request message for account %s has correlation id %s and was published on %s\n", account, corrId, messaging.ConsQueueName)
+	logger.Logger.Printf("Check request message for account %s has correlation id %s and was published on %s\n", account, corrId, PubQueueName)
 	return corrId
 }
 
