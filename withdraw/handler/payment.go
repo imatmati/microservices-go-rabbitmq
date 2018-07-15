@@ -4,6 +4,7 @@ import (
 	"account/logger"
 	utils "account/utils/http"
 	l "account/utils/language"
+	"account/withdraw/data"
 	"account/withdraw/services"
 	"fmt"
 	"net/http"
@@ -15,6 +16,7 @@ func WithdrawHandler(rw http.ResponseWriter, rq *http.Request) {
 	defer func() {
 		if r := recover(); r != nil {
 			rw.WriteHeader(500)
+			//To avoid problem with runtime.errString when nil pointer error : fmt.Sprintf("%v", r)
 			rw.Write([]byte(utils.ErrorJSON(fmt.Sprintf("%v", r))))
 		}
 	}()
@@ -40,6 +42,11 @@ func WithdrawHandler(rw http.ResponseWriter, rq *http.Request) {
 	// IV - Send response
 	rw.Header().Set("Content-Type", "application/json")
 	rw.WriteHeader(statusCode)
-	fmt.Fprint(rw, fmt.Sprintf("{\"account\":\"%s\",\"result\":\"%s\"}", account, result))
+	resultToSend := data.Result{Account: account, Result: result}
+	if jsonResult, err := resultToSend.ToJSON(); err == nil {
+		fmt.Fprint(rw, jsonResult)
+	} else {
+		l.PanicIf(err, "Json marshalling error")
+	}
 
 }

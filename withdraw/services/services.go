@@ -20,12 +20,12 @@ func CheckAccount(account string) bool {
 func UpdateAccount(number string, amount int, currency string) int {
 	account_amount := -1
 	err := data.Db.Update(func(tx *buntdb.Tx) error {
-		accountJson, err := tx.Get(number)
+		account_db, err := tx.Get(number)
 		l.PanicIf(err, "Account ", number, " not found")
-		logger.Logger.Printf("Withdraw for account %v\n", accountJson)
+		logger.Logger.Printf("Withdraw of %d/100 of %s for account %v\n", amount, currency, account_db)
 
 		account := data.Account{}
-		json.Unmarshal([]byte(accountJson), &account)
+		json.Unmarshal([]byte(account_db), &account)
 
 		if account.Amount < amount {
 			return fmt.Errorf("Insufficient provision on account  %s", number)
@@ -35,11 +35,12 @@ func UpdateAccount(number string, amount int, currency string) int {
 		}
 		account.Amount -= amount
 		account_amount = account.Amount
-		jsonAccount, err := json.Marshal(account)
+		account_after_withdraw, err := json.Marshal(account)
 		if err != nil {
 			return err
 		}
-		_, _, err = tx.Set(number, string(jsonAccount), nil)
+		_, _, err = tx.Set(number, string(account_after_withdraw), nil)
+		logger.Logger.Printf("Account after withdraw %v\n", string(account_after_withdraw))
 		return err
 	})
 	l.PanicIf(err)
