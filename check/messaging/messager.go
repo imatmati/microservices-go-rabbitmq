@@ -55,10 +55,7 @@ func consumeCheckRequest(ch, chResp *amqp.Channel) {
 			Body:          []byte(strconv.FormatBool(check)),
 			CorrelationId: msg.CorrelationId,
 		})
-		if err != nil {
-			logger.Logger.Println(err.Error())
-		}
-
+		l.PanicIf(err)
 		msg.Ack(false)
 
 	}
