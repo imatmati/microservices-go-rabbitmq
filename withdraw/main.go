@@ -20,6 +20,7 @@ func main() {
 	logger.InitLogger(output, prefix)
 	messaging.InitMessaging(amqpURL, checkQueue, withdrawQueue)
 	http.HandleFunc("/withdraw", handler.WithdrawHandler)
+	http.HandleFunc("/", handler.HealthCheckHandler)
 	err := http.ListenAndServe(addr, nil)
 	l.PanicIf(err)
 }
