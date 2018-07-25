@@ -20,7 +20,7 @@ func main() {
 	logger.InitLogger(output, prefix)
 	messaging.InitMessaging(amqpURL, checkQueue)
 	go messaging.Start()
-
+	http.HandleFunc("/", handler.HealthCheckHandler)
 	http.HandleFunc("/check", handler.CheckHandler)
 	err := http.ListenAndServe(addr, nil)
 	l.PanicIf(err)
