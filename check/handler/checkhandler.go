@@ -11,6 +11,12 @@ import (
 	"strconv"
 )
 
+//HealthCheckHandler answers the health check call
+func HealthCheckHandler(rw http.ResponseWriter, rq *http.Request) {
+	rw.WriteHeader(200)
+}
+
+//CheckHandler handlers request for checking accounts
 func CheckHandler(rw http.ResponseWriter, rq *http.Request) {
 	defer func() {
 		if r := recover(); r != nil {

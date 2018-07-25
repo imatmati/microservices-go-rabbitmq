@@ -11,6 +11,11 @@ import (
 	"strconv"
 )
 
+//HealthCheckHandler answers the health check call
+func HealthCheckHandler(rw http.ResponseWriter, rq *http.Request) {
+	rw.WriteHeader(200)
+}
+
 //WithdrawHandler handles withdraw operation on account.
 func WithdrawHandler(rw http.ResponseWriter, rq *http.Request) {
 	defer func() {
